@@ -8,8 +8,9 @@
 
 const {resolve} = require('path');
 const webpack = require('webpack');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
-module.exports = ({stage, actions}) => {
+module.exports = ({stage, actions, getConfig}) => {
   actions.setWebpackConfig({
     resolve: {
       modules: [
@@ -20,4 +21,23 @@ module.exports = ({stage, actions}) => {
     // See https://github.com/FormidableLabs/react-live/issues/5
     plugins: [new webpack.IgnorePlugin(/^(xor|props)$/)],
   });
+
+  if (stage === `build-javascript`) {
+    const config = getConfig();
+    const cssExtractIndex = config.plugins.findIndex(
+      pl => pl instanceof MiniCssExtractPlugin,
+    );
+
+    config.plugins[cssExtractIndex] = new MiniCssExtractPlugin({
+      filename: `[name].css`,
+      chunkFilename: `[name].css`,
+    });
+
+    config.output = {
+      filename: `[name].js`,
+      chunkFilename: `[name].js`,
+      path: config.output.path,
+      publicPath: config.output.publicPath,
+    };
+  }
 };
